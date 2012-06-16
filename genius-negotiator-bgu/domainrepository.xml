@@ -20,7 +20,6 @@
                 <profile url="file:etc/templates/SON_with_discount/son_buyer.xml"/>
                 <profile url="file:etc/templates/SON_with_discount/son_seller.xml"/>
             </domainRepItem>
-            
             <domainRepItem url="file:etc/templates/AMPOvsCity/ampo_vs_city_template.xml">
                 <profile url="file:etc/templates/AMPOvsCity/ampo_vs_city_city_space.xml"/>
                 <profile url="file:etc/templates/AMPOvsCity/ampo_vs_city_ampo_space.xml"/>
@@ -36,6 +35,10 @@
             <domainRepItem url="file:etc/templates/web_service/web_service_domain.xml">
                 <profile url="file:etc/templates/web_service/web_service_agent_B.xml"/>
                 <profile url="file:etc/templates/web_service/web_service_agent_A.xml"/>
+            </domainRepItem>
+            <domainRepItem url="file:TripDomain/trip_domain.xml">
+                <profile url="file:TripDomain/trip_A_utility.xml"/>
+                <profile url="file:TripDomain/trip_B_utility.xml"/>
             </domainRepItem>
         </domainRepItem>
         <protocolRepItem/>
