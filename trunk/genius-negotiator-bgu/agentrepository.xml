@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<repository fileName="agentrepository.xml">
+    <items>
+        <agentRepItems>
+			<agentRepItem description="EVT Agent" classPath="GAgents.EVTAgent" agentName="EVTAgent"/>
+            <agentRepItem description="Bayesian Agent" classPath="agents.BayesianAgent" agentName="BayesianAgent"/>
+
+        	<agentRepItem description="RGR" classPath="agents.RGR" agentName="RGR"/>
+        	<agentRepItem description="AgentLG" classPath="agents.AgentLG.AgentLG" agentName="AgentLG"/>
+			
+            <agentRepItem description="ANAC 2011 - ValueModelAgent" classPath="agents.ValueModelAgent.ValueModelAgent" agentName="ANAC 2011 - ValueModelAgent"/>
+        	<agentRepItem description="ANAC 2011 - Gahboninho" classPath="agents.Gahboninho.Gahboninho" agentName="ANAC 2011 - Gahboninho"/>
+        	<agentRepItem description="ANAC 2011 - HardHeaded" classPath="agents.HardHeaded.KLH" agentName="ANAC 2011 - HardHeaded"/>
+        	<agentRepItem description="ANAC 2011 - Nice Tit for Tat" classPath="agents.NiceTitForTat.NiceTitForTat" agentName="ANAC 2011 - Nice Tit for Tat"/>
+
+        
+            
+        </agentRepItems>
+        <domainRepItem/>
+        <protocolRepItem/>
+    </items>
+    <filename>agentrepository.xml</filename>
+</repository>
