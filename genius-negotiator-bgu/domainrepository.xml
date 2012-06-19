@@ -40,6 +40,10 @@
                 <profile url="file:TripDomain/trip_A_utility.xml"/>
                 <profile url="file:TripDomain/trip_B_utility.xml"/>
             </domainRepItem>
+            <domainRepItem url="file:TripDomain_with_discount/trip_domain_discount.xml">
+                <profile url="file:TripDomain_with_discount/trip_A_utility_discount.xml"/>
+                <profile url="file:TripDomain_with_discount/trip_B_utility_discount.xml"/>
+            </domainRepItem>
         </domainRepItem>
         <protocolRepItem/>
     </items>
