@@ -35,17 +35,25 @@ import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Vector;
 
+import agents.AgentLG.OpponentBids;
+
 public class EVTAgent extends Agent {
 	
 	
 	
 	Vector<Action> opponentActiones;
-	private static double MINIMUM_BID_UTILITY = 0.0;
+	private static double MINIMUM_BID_UTILITY;
 	private Action actionOfPartner;
-	private double progressFactor;
-	private ArrayList<Pair<Bid,Double>> myBids;
-	private ArrayList<Pair<Bid,Double>> opponetBids;
 	
+	private double regressionRate;
+	private double progressRate;
+	private double biasRate;
+	private double sleepRate;
+
+	private int currentBidInx;
+	private ArrayList<Pair<Bid,Double>> myBids;
+	private Vector<ArrayList<Pair<Bid,Double>>> opponentBids;
+	private int session;
 	
 	
 	/*
@@ -56,10 +64,14 @@ public class EVTAgent extends Agent {
 		actionOfPartner=null;
 		MINIMUM_BID_UTILITY = utilitySpace.getReservationValueUndiscounted(); 
 		opponentActiones = new Vector<Action>();
-		progressFactor = 0;
+		regressionRate = 0;
+		progressRate = 30;
+		biasRate = 1;
+		session = -1;
 		myBids = new ArrayList<Pair<Bid,Double>>();
-		opponetBids = new ArrayList<Pair<Bid,Double>>();
-		
+		opponentBids = new Vector<ArrayList<Pair<Bid,Double>>>();
+		sleepRate = 0;
+		currentBidInx = 0;
 		try {
 			initStates();
 		} catch (Exception e) {
@@ -68,7 +80,7 @@ public class EVTAgent extends Agent {
 		
 	}
 
-	public void initStates() throws Exception
+	private void initStates() throws Exception
 	{
 		Vector<Integer> issuesNumbers = new Vector<Integer>();
 		Vector<Vector<Value>> issuesValues = new Vector<Vector<Value>>(); // pairs <issuenumber,chosen value string>
@@ -154,7 +166,9 @@ public class EVTAgent extends Agent {
 	 */
 	@Override
 	public void beginSession(int sessionNumber){
-		
+		session++;
+		currentBidInx = 0;
+		opponentBids.add(new ArrayList<Pair<Bid,Double>>());
 	}
 	
 	/*
@@ -178,8 +192,13 @@ public class EVTAgent extends Agent {
 			{
 				Bid partnerBid = ((Offer)actionOfPartner).getBid();
 				double offeredUtilFromOpponent = getUtility(partnerBid);
+ 
+				addToopponentBids(partnerBid,offeredUtilFromOpponent);
+				
 				double time = timeline.getTime();
-				action = chooseInitialAction();
+				action = chooseAction(partnerBid,offeredUtilFromOpponent,time);
+				biasRate = 1+(Math.pow(1-time,2)); 
+				
 				Bid myBid = ((Offer) action).getBid();
 				double myOfferedUtil = getUtility(myBid);
 				
@@ -187,23 +206,93 @@ public class EVTAgent extends Agent {
 				if (isAcceptable(offeredUtilFromOpponent, myOfferedUtil, time))
 					action = new Accept(getAgentID());
 			}
-			sleep(0.005); // just for fun
+			sleep(sleepRate);
 		} catch (Exception e) { 
 			System.out.println("Exception in ChooseAction:"+e.getMessage());
-			action=new Accept(getAgentID()); // best guess if things go wrong. 
+			action=new Accept(getAgentID()); 
 		}
 		return action;
 	}
 
+	private void addToopponentBids(Bid partnerBid, double offeredUtilFromOpponent) {
+		ArrayList<Pair<Bid, Double>>  l = opponentBids.get(session);		
+		Pair<Bid,Double>  p = new Pair<Bid,Double>(partnerBid,offeredUtilFromOpponent);
+	    boolean flag = true;
+		for (Pair<Bid,Double> inner : l)
+	    {
+	    	if (inner.getFirst().equals(partnerBid))
+	    	{
+	    		flag = false;
+	    		break;
+	    	}
+	    }
+		if (flag)
+		{
+			l.add(p);
+		}
+		
+	}
+	
+
+	private Action chooseAction(Bid partnerBid, double offeredUtilFromOpponent,double time) 
+	{	
+		int oldBidinx =  currentBidInx;
+		Action action = null;
+		
+		Collections.sort(opponentBids.get(session), new Comparator<Pair<Bid,Double>>(){  
+    		public int compare(Pair<Bid, Double> p1, Pair<Bid, Double> p2){   
+    			return p2.getSecond().compareTo(p1.getSecond());  
+    		}});
+		
+	
+		Double oppMaxBidEval = opponentBids.get(session).get(0).getSecond();	
+		Double myMaxEval = myBids.get(currentBidInx).getSecond();
+		
+		
+		double midEval = ((oppMaxBidEval*(regressionRate))+ (myMaxEval*(1-regressionRate)))*biasRate;
+		Bid midBid = lookForBid(midEval);
+		if (midBid==null)
+		{
+			midBid = myBids.get(oldBidinx).getFirst();
+		}
+		
+		regressionRate = Math.pow(time/(1-utilitySpace.getDiscountFactor()),progressRate);
+		if (regressionRate>1) regressionRate = 1;
+		
+		action = new Offer(getAgentID(), midBid);
+		if (getUtility(myBids.get(currentBidInx).getFirst()) < MINIMUM_BID_UTILITY)
+		{
+			action = new Offer(getAgentID(), myBids.get(oldBidinx).getFirst());
+			currentBidInx = oldBidinx;
+		}	
+		return action;
+	}
+
+	private Bid lookForBid(double midEval) {
+		for (Pair<Bid,Double> bid : myBids)
+	    {
+			if (bid.getSecond()<= midEval)
+			{
+				currentBidInx = myBids.indexOf(bid);
+				if (currentBidInx>0)
+				{
+					System.out.println("!!!!!!");
+				}
+				return bid.getFirst();
+			}
+	    }
+		return null;
+	}
+
 	public Action chooseInitialAction()
 	{
-		return new Offer(getAgentID(), myBids.get(0).getFirst());
+		return new Offer(getAgentID(), myBids.get(currentBidInx).getFirst());
 	}
 	
 	
 	private boolean isAcceptable(double offeredUtilFromOpponent, double myOfferedUtil, double time) throws Exception
 	{		
-		if (offeredUtilFromOpponent>myOfferedUtil)
+		if (offeredUtilFromOpponent>=(0.99)*myOfferedUtil)
 			return true;
 		return false;
 	}
