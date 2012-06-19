@@ -1,0 +1,41 @@
+<negotiation_template number_of_sessions="1">
+	<utility_space number_of_issues="0">
+		<objective index="1" etype="objective" type="objective"
+			description="" name="Trip">
+			<issue index="2" etype="discrete" type="discrete" vtype="discrete"
+				name="Length">
+				<item index="1" value="1 Day" cost="30" description="">
+				</item>
+				<item index="2" value="1 month" cost="80" description="">
+				</item>
+				<item index="3" value="6 month" cost="100" description="">
+				</item>
+				<item index="4" value="1 year" cost="200" description="">
+				</item>
+				<similarity_function type="binary" weight="0.333333"/>
+			</issue>
+			<issue index="3" etype="discrete" type="discrete" vtype="discrete" name="Location">
+				<item index="1" value="Israel" cost="200" description="">
+				</item>
+				<item index="2" value="Europe" cost="300" description="">
+				</item>
+				<item index="3" value="USA" cost="100" description="">
+				</item>
+				<similarity_function type="binary" weight="0.333333"/>
+			</issue>
+			<issue index="4" etype="discrete" type="discrete" vtype="discrete"
+				name="Type">
+				<item index="1" value="Vacation" cost="600" description="">
+				</item>
+				<item index="2" value="Trekking" cost="200" description="">
+				</item>
+				<item index="3" value="Cultural" cost="450" description="">
+				</item>
+				<similarity_function type="binary" weight="0.33333"/>
+			</issue>
+		</objective>
+		<discount_factor>
+			<value>1</value>
+		</discount_factor>
+	</utility_space>
+</negotiation_template> 
