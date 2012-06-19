@@ -1,0 +1,38 @@
+<utility_space> 
+<objective index="1" description="" name="Trip" type="objective" etype="objective"> 
+<issue index="2" name="Length" vtype="discrete" type="discrete" etype="discrete"> 
+<item index="1" description="" value="1 Day" cost="30.0" evaluation="2"> 
+</item> 
+<item index="2" description="" value="1 month" cost="80.0" evaluation="7"> 
+</item> 
+<item index="3" description="" value="6 month" cost="100.0" evaluation="12"> 
+</item> 
+<item index="4" description="" value="1 year" cost="200.0" evaluation="1"> 
+</item> 
+</issue> 
+<issue index="3" name="Location" vtype="discrete" type="discrete" etype="discrete"> 
+<item index="1" description="" value="Israel" cost="200.0" evaluation="4"> 
+</item> 
+<item index="2" description="" value="Europe" cost="300.0" evaluation="2"> 
+</item> 
+<item index="3" description="" value="USA" cost="100.0" evaluation="7"> 
+</item> 
+</issue> 
+<issue index="4" name="Type" vtype="discrete" type="discrete" etype="discrete"> 
+<item index="1" description="" value="Vacation" cost="600.0" evaluation="2"> 
+</item> 
+<item index="2" description="" value="Trekking" cost="200.0" evaluation="12"> 
+</item> 
+<item index="3" description="" value="Cultural" cost="450.0" evaluation="5"> 
+</item> 
+</issue> 
+<weight index="2" value="0.2906383610004117"> 
+</weight> 
+<weight index="3" value="0.48421861367679075"> 
+</weight> 
+<weight index="4" value="0.22514302532279748"> 
+</weight> 
+</objective>
+<discount_factor value="0.8">
+	</discount_factor> 
+</utility_space> 
