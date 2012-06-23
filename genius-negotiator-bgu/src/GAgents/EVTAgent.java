@@ -103,7 +103,7 @@ public class EVTAgent extends Agent {
 		noisFact+=noisLearn;
 		noisFact = noisFact<0?0:noisFact;
 		
-		biasFactor = 0.5;
+		biasFactor = 1;
 		
 		ArrayList<Pair<Bid,Double>> l = new ArrayList<Pair<Bid,Double>>();
 		opponentBidsA.add(l);
@@ -137,12 +137,14 @@ public class EVTAgent extends Agent {
 				progressLearn/=1.2;
 				noisLearn/=1.2;
 				compromiseLearn-=5;
+				biasFactor*=2;
 				return;
 			}
 			else if (!isOpponent)
 			{
 				progressLearn/=2;
 				compromiseLearn-=10;
+				biasFactor*=2;
 				return;
 			}
 			
@@ -157,12 +159,14 @@ public class EVTAgent extends Agent {
 				compromiseLearn+=20;
 				progressLearn*=3;
 				noisLearn*=3;
+				biasFactor/=2;
 			}
 			else if (loss>0.3)
 			{
 				progressLearn*=2;
 				noisLearn*=2;
 				compromiseLearn+=10;
+				biasFactor/=1.2;
 			}
 		}
 	}
