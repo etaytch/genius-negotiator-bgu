@@ -33,12 +33,15 @@ public class EVTAgent extends Agent {
 	private double sleepRate;
 	private double noisRate;
 	private double noisFact;
-	private double df = 1;
+	private double compromiseLearn;
+	private double ProgressLearn;
+	private double noisLearn;
+	private double df;
+	private double reservationPanic;
 	private int currentBidInx;
 	private ArrayList<Pair<Bid,Double>> myBids;
 	private Vector<ArrayList<Pair<Bid,Double>>> opponentBidsA;
 	private Vector<ArrayList<Pair<Bid,Double>>> opponentBidsB;
-	
 	private int session;
 	
 	
@@ -47,31 +50,26 @@ public class EVTAgent extends Agent {
 	 */
 	@Override
 	public void init() { 
-
-		compromiseRate = 0;
-		compromiseFact = 20;
-		ProgressDif = 20;
-		biasFactor = 50;
-		noisRate = 0;
-		noisFact = 0.5;
-		biasRate = 1.2;
+		
 		session = -1;
+		
+		compromiseLearn = 0;
+		ProgressLearn = 0;
+		noisLearn = 0;
+		
+		reservationPanic = 0.2;
 		myBids = new ArrayList<Pair<Bid,Double>>();
 		opponentBidsA = new Vector<ArrayList<Pair<Bid,Double>>>();
 		opponentBidsB = new Vector<ArrayList<Pair<Bid,Double>>>();
-		sleepRate = 0;
-		currentBidInx = 0;
-		
+
 		df = utilitySpace.getDiscountFactor();
 		if (df==0) df = 1; 
-		
-		
+
 		try {
 			initStates();
 		} catch (Exception e) {
  			e.printStackTrace();
 		}		
-		
 	}
 	
 	/*
@@ -82,16 +80,28 @@ public class EVTAgent extends Agent {
 		session++;
 		actionOfPartner=null;
 		currentBidInx = 0;
-		compromiseFact = 30;
-		ProgressDif = 20;
+		
+		compromiseRate = 0;
 		noisRate = 0;
-		noisFact = 0.5;
 		sleepRate = 0;
 		biasRate = 1;
-		compromiseRate = 0;
+		biasRate = 1.2;
+
+		
+		compromiseFact = 30;
+		compromiseFact+= compromiseLearn;
+		currentBidInx = 0;
+		ProgressDif = 10;
+		ProgressDif+=ProgressLearn;
+		noisFact = 0.2;
+		noisFact+=noisLearn;
+		biasFactor = 50;
+		
 		ArrayList<Pair<Bid,Double>> l = new ArrayList<Pair<Bid,Double>>();
 		opponentBidsA.add(l);
 		opponentBidsB.add(l);
+		
+		
 	}
 	
 	/*
@@ -167,21 +177,29 @@ public class EVTAgent extends Agent {
     		}});
 		
 	
+		
+		
 		Double oppMaxBidEval = opponentBidsA.get(session).get(0).getSecond();	
 		Double myMaxEval = myBids.get(currentBidInx).getSecond();
-		noisRate = Math.pow(time,noisFact); 
 		
+		//parameters reajustment
+		/////////////////////////////////////////
+		noisRate = Math.pow(time,noisFact); 
 		double midEval = ((oppMaxBidEval*(compromiseRate))+ (myMaxEval*(1-compromiseRate)))*biasRate;
 		Bid midBid = lookForBid(midEval,oldBidinx);
 		if (midBid==null)
 		{
 			midBid = myBids.get(oldBidinx).getFirst();
 		}
-
-
-		
 		compromiseRate = Math.pow(Math.sqrt(time/Math.pow(df,time)),compromiseFact);
 		if (compromiseRate>1) compromiseRate = 1;
+		
+		if (myBids.get(currentBidInx).getSecond()*Math.pow(df,time)-utilitySpace.getReservationValueUndiscounted()<reservationPanic)
+		{
+			compromiseFact/=2;
+		}	
+		////////////////////////////////////////
+		
 		
 		
 		action = new Offer(getAgentID(), midBid);
@@ -217,11 +235,12 @@ public class EVTAgent extends Agent {
 				currentBidInx = myBids.indexOf(bid);
 				if(currentBidInx>oldInx)
 				{	
-					compromiseFact+=ProgressDif-opponentBidsA.size();		
+					compromiseFact+=ProgressDif*(opponentBidsA.size());		
 				}
 				return bid.getFirst();
 			 }
 	    }
+		
 		return null;
 	}
 
