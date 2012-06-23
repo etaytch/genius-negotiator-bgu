@@ -23,18 +23,17 @@ public class EVTAgent extends Agent {
 	
 	
 	
-	Vector<Action> opponentActiones;
-	private static double MINIMUM_BID_UTILITY;
+
 	private Action actionOfPartner;
-	
-	private double regressionRate;
-	private double progressRate;
+	private double compromiseRate;
+	private double compromiseFact;
 	private double ProgressDif;
 	private double biasRate;
 	private double biasFactor;
 	private double sleepRate;
+	private double noisRate;
 	private double noisFact;
-	private double discountFact;
+	private double df = 1;
 	private int currentBidInx;
 	private ArrayList<Pair<Bid,Double>> myBids;
 	private Vector<ArrayList<Pair<Bid,Double>>> opponentBidsA;
@@ -47,15 +46,14 @@ public class EVTAgent extends Agent {
 	 * Set initial parameters for all sessions
 	 */
 	@Override
-	public void init() {
-		actionOfPartner=null;
-		MINIMUM_BID_UTILITY = utilitySpace.getReservationValueUndiscounted(); 
-		opponentActiones = new Vector<Action>();
-		regressionRate = 0;
-		progressRate = 50;
+	public void init() { 
+
+		compromiseRate = 0;
+		compromiseFact = 20;
+		ProgressDif = 20;
 		biasFactor = 50;
-		discountFact = 0.005;
-		noisFact = 0;
+		noisRate = 0;
+		noisFact = 0.5;
 		biasRate = 1.2;
 		session = -1;
 		myBids = new ArrayList<Pair<Bid,Double>>();
@@ -63,7 +61,11 @@ public class EVTAgent extends Agent {
 		opponentBidsB = new Vector<ArrayList<Pair<Bid,Double>>>();
 		sleepRate = 0;
 		currentBidInx = 0;
-		ProgressDif = 30;
+		
+		df = utilitySpace.getDiscountFactor();
+		if (df==0) df = 1; 
+		
+		
 		try {
 			initStates();
 		} catch (Exception e) {
@@ -78,11 +80,15 @@ public class EVTAgent extends Agent {
 	@Override
 	public void beginSession(int sessionNumber){
 		session++;
+		actionOfPartner=null;
 		currentBidInx = 0;
-		noisFact = 0;
+		compromiseFact = 30;
+		ProgressDif = 20;
+		noisRate = 0;
+		noisFact = 0.5;
 		sleepRate = 0;
 		biasRate = 1;
-		regressionRate = 0;
+		compromiseRate = 0;
 		ArrayList<Pair<Bid,Double>> l = new ArrayList<Pair<Bid,Double>>();
 		opponentBidsA.add(l);
 		opponentBidsB.add(l);
@@ -112,13 +118,15 @@ public class EVTAgent extends Agent {
 				addToopponentBids(partnerBid,offeredUtilFromOpponent);
 				double time = timeline.getTime();
 				action = chooseAction(partnerBid,offeredUtilFromOpponent,time);
-				biasRate = 1+(Math.pow(1-time,biasFactor)); 
-				Bid myBid = ((Offer) action).getBid();
-				double myOfferedUtil = getUtility(myBid);
-				
-				// accept under certain circumstances
-				if (isAcceptable(offeredUtilFromOpponent, myOfferedUtil, time))
-					action = new Accept(getAgentID());
+				if (!(action instanceof EndNegotiation))
+				{
+					
+					biasRate = 1+(Math.pow(1-time,biasFactor)); 
+					Bid myBid = ((Offer) action).getBid();
+					double myOfferedUtil = getUtility(myBid);
+					if (isAcceptable(offeredUtilFromOpponent, myOfferedUtil, time))
+						action = new Accept(getAgentID());
+				}				
 			}
 			sleep(sleepRate);
 		} catch (Exception e) { 
@@ -161,50 +169,58 @@ public class EVTAgent extends Agent {
 	
 		Double oppMaxBidEval = opponentBidsA.get(session).get(0).getSecond();	
 		Double myMaxEval = myBids.get(currentBidInx).getSecond();
-		noisFact = Math.sqrt(time); 
+		noisRate = Math.pow(time,noisFact); 
 		
-		double midEval = ((oppMaxBidEval*(regressionRate))+ (myMaxEval*(1-regressionRate)))*biasRate;
-		
+		double midEval = ((oppMaxBidEval*(compromiseRate))+ (myMaxEval*(1-compromiseRate)))*biasRate;
 		Bid midBid = lookForBid(midEval,oldBidinx);
 		if (midBid==null)
 		{
 			midBid = myBids.get(oldBidinx).getFirst();
 		}
+
+
 		
-		regressionRate = Math.pow(time/Math.pow((1-Math.pow(utilitySpace.getDiscountFactor(),time)),discountFact),progressRate);
-		if (regressionRate>1) regressionRate = 1;
+		compromiseRate = Math.pow(Math.sqrt(time/Math.pow(df,time)),compromiseFact);
+		if (compromiseRate>1) compromiseRate = 1;
+		
 		
 		action = new Offer(getAgentID(), midBid);
-		if (getUtility(myBids.get(currentBidInx).getFirst()) < MINIMUM_BID_UTILITY)
+		if (myBids.get(currentBidInx).getSecond() < utilitySpace.getReservationValueUndiscounted())
 		{
 			action = new Offer(getAgentID(), myBids.get(oldBidinx).getFirst());
 			currentBidInx = oldBidinx;
 		}	
 		
+		if (myBids.get(currentBidInx).getSecond()*Math.pow(df,time) < utilitySpace.getReservationValueUndiscounted())
+		{
+			action = new EndNegotiation(getAgentID());
+		}	
+		
 		if ((time>0.95)&&(opponentBidsA.get(session).size()<=2))
 		{ 
-			action = new EndNegotiation();
+			action = new EndNegotiation(getAgentID());
 		}
 		
 		return action;
 	}
 
 	private Bid lookForBid(double midEval,int oldInx) {
+		if (Math.random()>noisRate)
+		{
+			 currentBidInx = (int)(currentBidInx*Math.random());
+			 return myBids.get(currentBidInx).getFirst();
+		}
 		for (Pair<Bid,Double> bid : myBids)
 	    {
-			 if (Math.random()<noisFact)
+			 if (bid.getSecond()<= midEval)
 			 {
-				 currentBidInx = (int)(currentBidInx*Math.random());
-			 }
-			if (bid.getSecond()<= midEval)
-			{
 				currentBidInx = myBids.indexOf(bid);
 				if(currentBidInx>oldInx)
 				{	
-					progressRate+=ProgressDif-opponentBidsA.size();		
+					compromiseFact+=ProgressDif-opponentBidsA.size();		
 				}
 				return bid.getFirst();
-			}
+			 }
 	    }
 		return null;
 	}
@@ -217,7 +233,7 @@ public class EVTAgent extends Agent {
 	
 	private boolean isAcceptable(double offeredUtilFromOpponent, double myOfferedUtil, double time) throws Exception
 	{		
-		if (offeredUtilFromOpponent>=(0.99)*myOfferedUtil)
+		if (offeredUtilFromOpponent>=(0.95)*myOfferedUtil)
 			return true;
 		return false;
 	}
