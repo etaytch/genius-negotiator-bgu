@@ -34,7 +34,7 @@ public class EVTAgent extends Agent {
 	private double noisRate;
 	private double noisFact;
 	private double compromiseLearn;
-	private double ProgressLearn;
+	private double progressLearn;
 	private double noisLearn;
 	private double df;
 	private double reservationPanic;
@@ -53,9 +53,13 @@ public class EVTAgent extends Agent {
 		
 		session = -1;
 		
-		compromiseLearn = 0;
-		ProgressLearn = 0;
-		noisLearn = 0;
+		ProgressDif = 0;
+		noisFact = 0;
+		compromiseFact = 0;
+		
+		compromiseLearn = 20;
+		progressLearn = 10;
+		noisLearn = 0.2;
 		
 		reservationPanic = 0.2;
 		myBids = new ArrayList<Pair<Bid,Double>>();
@@ -84,18 +88,22 @@ public class EVTAgent extends Agent {
 		compromiseRate = 0;
 		noisRate = 0;
 		sleepRate = 0;
-		biasRate = 1;
 		biasRate = 1.2;
-
 		
-		compromiseFact = 30;
-		compromiseFact+= compromiseLearn;
-		currentBidInx = 0;
-		ProgressDif = 10;
-		ProgressDif+=ProgressLearn;
-		noisFact = 0.2;
+		ProgressDif = 0;
+		noisFact = 0;
+		compromiseFact = 0;
+		
+		compromiseFact+=compromiseLearn;
+		compromiseFact = compromiseFact<0?0:compromiseFact;
+		
+		ProgressDif+=progressLearn;
+		ProgressDif = ProgressDif<0?0:ProgressDif;
+		
 		noisFact+=noisLearn;
-		biasFactor = 50;
+		noisFact = noisFact<0?0:noisFact;
+		
+		biasFactor = 0.5;
 		
 		ArrayList<Pair<Bid,Double>> l = new ArrayList<Pair<Bid,Double>>();
 		opponentBidsA.add(l);
@@ -111,6 +119,52 @@ public class EVTAgent extends Agent {
 	@Override
 	public void endSession(Action LastAction){
 		
+		if (LastAction instanceof EndNegotiation)
+		{
+			EndNegotiation e = (EndNegotiation)LastAction;
+			boolean isOpponent = e.getAgent().equals(this);
+			double lastOfferedUtil = opponentBidsA.get(session).get(0).getSecond();
+			double maxUtil = myBids.get(0).getSecond();
+			double loss =  maxUtil-lastOfferedUtil;
+			
+			
+			if (loss>0.4)
+			{  
+				return;
+			}	
+			else if (isOpponent)
+			{
+				progressLearn/=1.2;
+				noisLearn/=1.2;
+				compromiseLearn-=5;
+				return;
+			}
+			else if (!isOpponent)
+			{
+				progressLearn/=2;
+				compromiseLearn-=10;
+				return;
+			}
+			
+		}
+		if (LastAction instanceof Accept)
+		{
+			double lastOfferedUtil = opponentBidsA.get(session).get(0).getSecond();
+			double maxUtil = myBids.get(0).getSecond();
+			double loss =  maxUtil-lastOfferedUtil;
+			if (loss>0.5)
+			{
+				compromiseLearn+=20;
+				progressLearn*=3;
+				noisLearn*=3;
+			}
+			else if (loss>0.3)
+			{
+				progressLearn*=2;
+				noisLearn*=2;
+				compromiseLearn+=10;
+			}
+		}
 	}
 
 	@Override
@@ -191,7 +245,10 @@ public class EVTAgent extends Agent {
 		{
 			midBid = myBids.get(oldBidinx).getFirst();
 		}
-		compromiseRate = Math.pow(Math.sqrt(time/Math.pow(df,time)),compromiseFact);
+		if (df==1)
+			compromiseRate = Math.pow(time,compromiseFact);
+		else
+			compromiseRate = Math.pow(Math.sqrt(time/Math.pow(df,time)),compromiseFact);
 		if (compromiseRate>1) compromiseRate = 1;
 		
 		if (myBids.get(currentBidInx).getSecond()*Math.pow(df,time)-utilitySpace.getReservationValueUndiscounted()<reservationPanic)
