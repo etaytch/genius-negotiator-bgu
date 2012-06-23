@@ -33,4 +33,5 @@
 <weight index="4" value="0.4894343114397406"> 
 </weight> 
 </objective> 
+<reservation value="0.4" />
 </utility_space> 

@@ -33,6 +33,7 @@
 <weight index="4" value="0.4894343114397406"> 
 </weight> 
 </objective>
-<discount_factor value="0.8">
-	</discount_factor> 
+<discount_factor value="0.4"/>
+<reservation value="0.2" />
+
 </utility_space> 
