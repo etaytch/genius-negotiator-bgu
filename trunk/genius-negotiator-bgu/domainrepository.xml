@@ -44,6 +44,14 @@
                 <profile url="file:TripDomain_with_discount/trip_A_utility_discount.xml"/>
                 <profile url="file:TripDomain_with_discount/trip_B_utility_discount.xml"/>
             </domainRepItem>
+			<domainRepItem url="file:housekeeping/Housekeeping.xml">
+                <profile url="file:housekeeping/Housekeeping_husbend_utility.xml"/>
+                <profile url="file:housekeeping/Housekeeping_wife_utility.xml"/>
+            </domainRepItem>
+			<domainRepItem url="file:thompson/thompson_employment.xml">
+                <profile url="file:thompson/thompson_employee_utilityspace.xml"/>
+                <profile url="file:thompson/thompson_employer_utilityspace.xml"/>
+            </domainRepItem>
         </domainRepItem>
         <protocolRepItem/>
     </items>

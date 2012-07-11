@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import misc.Pair;
 import negotiator.Agent;
+import negotiator.AgentID;
 import negotiator.Bid;
 import negotiator.actions.Accept;
 import negotiator.actions.Action;
@@ -112,6 +113,14 @@ public class EVTAgent extends Agent {
 		
 	}
 	
+	
+	public AgentID getAgentID()
+	{
+		return new AgentID(getName());
+	
+	}
+	
+	
 	/*
 	 * Recives the last bid that made in the previous session (this is how you'll know that the session is over, and how does it ends)
 	 * If LastAction is null, the last session has ended due to a TimeOut or other general error.
@@ -121,8 +130,12 @@ public class EVTAgent extends Agent {
 		
 		if (LastAction instanceof EndNegotiation)
 		{
+			boolean isOpponent = true;
 			EndNegotiation e = (EndNegotiation)LastAction;
-			boolean isOpponent = e.getAgent().equals(this);
+			if ( (e.getAgent()!=null))
+			{	
+				isOpponent = !e.getAgent().equals(this.getAgentID());
+			}
 			double lastOfferedUtil = opponentBidsA.get(session).get(0).getSecond();
 			double maxUtil = myBids.get(0).getSecond();
 			double loss =  maxUtil-lastOfferedUtil;
@@ -186,7 +199,7 @@ public class EVTAgent extends Agent {
 				addToopponentBids(partnerBid,offeredUtilFromOpponent);
 				double time = timeline.getTime();
 				action = chooseAction(partnerBid,offeredUtilFromOpponent,time);
-				if (!(action instanceof EndNegotiation))
+				if (!(action instanceof EndNegotiation) && !(action instanceof Accept))
 				{
 					
 					biasRate = 1+(Math.pow(1-time,biasFactor)); 
@@ -274,10 +287,13 @@ public class EVTAgent extends Agent {
 		{
 			action = new EndNegotiation(getAgentID());
 		}	
-		
-		if ((time>0.95)&&(opponentBidsA.get(session).size()<=2))
+	
+		if ((time>=0.99))
 		{ 
-			action = new EndNegotiation(getAgentID());
+			if(offeredUtilFromOpponent>utilitySpace.getReservationValueWithDiscount(time))
+				action = new Accept(getAgentID());
+			else
+				action = new EndNegotiation(getAgentID());
 		}
 		
 		return action;
